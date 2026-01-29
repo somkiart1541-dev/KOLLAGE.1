@@ -1,0 +1,3251 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kollage - สร้างคอลลาจภาพอันน่าจดจำ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=DM+Sans:wght@400;500;700&family=Prompt:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #FF3366;
+            --primary-dark: #CC0033;
+            --secondary: #6C5CE7;
+            --accent: #FFC833;
+            --bg-main: #0A0A0F;
+            --bg-card: #16161F;
+            --bg-hover: #1E1E2E;
+            --text: #FFFFFF;
+            --text-muted: #A0A0B2;
+            --border: #2A2A3C;
+            --success: #00D9A3;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'DM Sans', 'Prompt', sans-serif;
+            background: var(--bg-main);
+            color: var(--text);
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 20% 50%, rgba(108, 92, 231, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 51, 102, 0.1) 0%, transparent 50%);
+            background-attachment: fixed;
+        }
+        
+        .noise-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0.03;
+            z-index: 1000;
+            background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23noise)"/></svg>');
+        }
+        
+        .app-container {
+            max-width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            padding: 32px 40px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml;utf8,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse"><path d="M 50 0 L 0 0 0 50" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            opacity: 0.3;
+        }
+        
+        .header-content {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .logo {
+            font-family: 'Archivo Black', 'Prompt', sans-serif;
+            font-size: 48px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #FFFFFF 0%, #FFE5EC 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -2px;
+            margin-bottom: 8px;
+            text-shadow: 0 4px 20px rgba(255, 51, 102, 0.3);
+        }
+        
+        .tagline {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .sidebar {
+            width: 340px;
+            background: var(--bg-card);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        
+        .sidebar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 1px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--primary) 0%, transparent 50%, var(--secondary) 100%);
+            opacity: 0.3;
+        }
+        
+        .upload-section {
+            padding: 28px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .upload-btn {
+            width: 100%;
+            padding: 18px 24px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 8px 24px rgba(255, 51, 102, 0.25);
+        }
+        
+        .upload-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        .upload-btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+        
+        .upload-btn:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 12px 32px rgba(255, 51, 102, 0.4);
+        }
+        
+        .upload-btn:active {
+            transform: translateY(-1px) scale(0.98);
+        }
+        
+        .upload-icon {
+            font-size: 24px;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        
+        .layouts-section {
+            padding: 28px;
+            overflow-y: auto;
+            flex: 1;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .layouts-section::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .layouts-section::-webkit-scrollbar-track {
+            background: var(--bg-card);
+        }
+        
+        .layouts-section::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 3px;
+        }
+        
+        .section-title {
+            font-family: 'Prompt', sans-serif;
+            font-size: 14px;
+            font-weight: 800;
+            margin-bottom: 20px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 16px;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+        
+        .layout-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+        
+        .layout-card {
+            aspect-ratio: 1;
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            overflow: hidden;
+            position: relative;
+            background: var(--bg-hover);
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .layout-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .layout-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-4px) scale(1.05);
+            box-shadow: 0 12px 32px rgba(255, 51, 102, 0.2);
+        }
+        
+        .layout-card:hover::before {
+            opacity: 0.1;
+        }
+        
+        .layout-card.selected {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(255, 51, 102, 0.2), 0 8px 24px rgba(255, 51, 102, 0.3);
+            background: linear-gradient(135deg, rgba(255, 51, 102, 0.1) 0%, rgba(108, 92, 231, 0.1) 100%);
+        }
+        
+        .layout-preview {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            position: relative;
+            z-index: 1;
+            filter: grayscale(0.3);
+            transition: filter 0.3s;
+        }
+        
+        .layout-card:hover .layout-preview,
+        .layout-card.selected .layout-preview {
+            filter: grayscale(0);
+        }
+        
+        .layout-name {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, transparent 100%);
+            color: white;
+            padding: 16px 12px 12px;
+            font-size: 13px;
+            text-align: center;
+            font-weight: 700;
+            z-index: 2;
+            letter-spacing: 0.5px;
+        }
+        
+        .canvas-container {
+            flex: 1;
+            background: var(--bg-main);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            overflow: auto;
+            position: relative;
+        }
+        
+        .canvas-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                repeating-linear-gradient(0deg, transparent, transparent 50px, rgba(255, 255, 255, 0.02) 50px, rgba(255, 255, 255, 0.02) 51px),
+                repeating-linear-gradient(90deg, transparent, transparent 50px, rgba(255, 255, 255, 0.02) 50px, rgba(255, 255, 255, 0.02) 51px);
+            pointer-events: none;
+        }
+        
+        .canvas {
+            background: var(--bg-card);
+            box-shadow: 
+                0 0 0 1px rgba(255, 51, 102, 0.1),
+                0 20px 60px rgba(0, 0, 0, 0.4),
+                0 40px 100px rgba(255, 51, 102, 0.1);
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        .canvas.ratio-1-1 {
+            width: 700px;
+            height: 700px;
+        }
+        
+        .canvas.ratio-9-16 {
+            width: 450px;
+            height: 800px;
+        }
+        
+        .canvas.ratio-4-3 {
+            width: 700px;
+            height: 525px;
+        }
+        
+        .canvas.ratio-16-9 {
+            width: 800px;
+            height: 450px;
+        }
+        
+        .canvas-content {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        
+        .empty-canvas {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+        }
+        
+        .empty-icon {
+            font-size: 120px;
+            margin-bottom: 24px;
+            opacity: 0.3;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.05); }
+        }
+        
+        .empty-text {
+            font-size: 18px;
+            font-weight: 600;
+            opacity: 0.6;
+        }
+        
+        .mosaic-grid {
+            display: grid;
+            width: 100%;
+            height: 100%;
+            gap: 3px;
+            background: var(--bg-main);
+            padding: 3px;
+        }
+        
+        .mosaic-cell {
+            overflow: hidden;
+            position: relative;
+            background: var(--bg-hover);
+            border-radius: 4px;
+            cursor: move;
+        }
+        
+        .mosaic-cell img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            filter: brightness(0.95) contrast(1.05);
+            pointer-events: none;
+        }
+        
+        .mosaic-cell:hover img {
+            transform: scale(1.15) rotate(2deg);
+            filter: brightness(1) contrast(1.1);
+        }
+        
+        .mosaic-cell.dragging {
+            opacity: 0.5;
+            z-index: 1000;
+        }
+        
+        .mosaic-cell::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255, 51, 102, 0.2) 0%, rgba(108, 92, 231, 0.2) 100%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        
+        .mosaic-cell:hover::after {
+            opacity: 1;
+            mix-blend-mode: overlay;
+        }
+        
+        .toolbar {
+            background: var(--bg-card);
+            padding: 24px 40px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+        }
+        
+        .toolbar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent 0%, var(--primary) 50%, transparent 100%);
+            opacity: 0.3;
+        }
+        
+        .toolbar-left {
+            display: flex;
+            gap: 16px;
+        }
+        
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+            overflow: hidden;
+            letter-spacing: 0.3px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--secondary) 0%, #5243C7 100%);
+            color: white;
+            box-shadow: 0 6px 20px rgba(108, 92, 231, 0.25);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 28px rgba(108, 92, 231, 0.4);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, var(--success) 0%, #00B87C 100%);
+            color: white;
+            box-shadow: 0 6px 20px rgba(0, 217, 163, 0.25);
+        }
+        
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 28px rgba(0, 217, 163, 0.4);
+        }
+        
+        .btn:active {
+            transform: translateY(0) scale(0.95);
+        }
+        
+        .image-count {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 15px;
+            color: var(--text-muted);
+            background: var(--bg-hover);
+            padding: 12px 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+        
+        .count-number {
+            color: var(--primary);
+            font-weight: 900;
+            font-size: 24px;
+            font-family: 'Archivo Black', sans-serif;
+        }
+        
+        .settings-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 12px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+        
+        .settings-label {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+        
+        .slider-container {
+            flex: 1;
+            margin-left: 16px;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--border);
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(255, 51, 102, 0.4);
+        }
+        
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 4px 12px rgba(255, 51, 102, 0.6);
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(10, 10, 15, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            backdrop-filter: blur(10px);
+        }
+        
+        .loading-content {
+            text-align: center;
+        }
+        
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            font-size: 16px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+        
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+        
+        .filter-btn {
+            padding: 10px;
+            background: var(--bg-hover);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .filter-btn:hover {
+            border-color: var(--primary);
+            background: rgba(255, 51, 102, 0.1);
+        }
+        
+        .filter-btn.active {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border-color: var(--primary);
+            color: white;
+        }
+        
+        .color-picker-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: var(--bg-hover);
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+        
+        input[type="color"] {
+            width: 50px;
+            height: 50px;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            background: transparent;
+        }
+        
+        input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 4px;
+        }
+        
+        input[type="color"]::-webkit-color-swatch {
+            border-radius: 6px;
+            border: none;
+        }
+        
+        .color-label {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+        
+        .text-input {
+            width: 100%;
+            padding: 12px;
+            background: var(--bg-hover);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+        }
+        
+        .text-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: var(--bg-card);
+        }
+        
+        .text-input::placeholder {
+            color: var(--text-muted);
+            opacity: 0.5;
+        }
+        
+        .add-text-btn {
+            width: 100%;
+            padding: 12px;
+            background: var(--secondary);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .add-text-btn:hover {
+            background: #5243C7;
+            transform: translateY(-2px);
+        }
+        
+        .canvas-text {
+            position: absolute;
+            color: white;
+            font-family: 'Prompt', sans-serif;
+            font-size: 32px;
+            font-weight: 800;
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
+            cursor: move;
+            user-select: none;
+            z-index: 100;
+            padding: 10px 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            backdrop-filter: blur(5px);
+            border: 2px solid transparent;
+        }
+        
+        .canvas-text:hover {
+            background: rgba(255, 51, 102, 0.3);
+            border-color: var(--primary);
+        }
+        
+        .canvas-text.selected {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(255, 51, 102, 0.2);
+        }
+        
+        .canvas-text.dragging {
+            opacity: 0.7;
+        }
+        
+        .text-controls {
+            position: fixed;
+            bottom: 250px;
+            right: 40px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            z-index: 600;
+            display: none;
+            min-width: 250px;
+        }
+        
+        .text-controls.active {
+            display: block;
+            animation: slideUp 0.3s ease-out;
+        }
+        
+        .control-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        
+        .control-label {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 600;
+            min-width: 60px;
+        }
+        
+        .control-input {
+            flex: 1;
+        }
+        
+        input[type="range"].size-slider {
+            width: 100%;
+        }
+        
+        input[type="color"].text-color {
+            width: 50px;
+            height: 40px;
+        }
+        
+        .delete-text-btn {
+            width: 100%;
+            padding: 10px;
+            background: #FF4444;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .delete-text-btn:hover {
+            background: #CC0000;
+            transform: translateY(-2px);
+        }
+        
+        .drop-zone {
+            border: 3px dashed var(--primary);
+            background: rgba(255, 51, 102, 0.1);
+        }
+        
+        .drop-zone::after {
+            content: '📸 วางรูปภาพที่นี่';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+            pointer-events: none;
+        }
+        
+        .sticker-panel {
+            position: fixed;
+            bottom: 80px;
+            right: 40px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            z-index: 500;
+            display: none;
+        }
+        
+        .sticker-panel.active {
+            display: block;
+            animation: slideUp 0.3s ease-out;
+        }
+        
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        .sticker-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            max-width: 300px;
+        }
+        
+        .sticker-item {
+            font-size: 40px;
+            padding: 10px;
+            background: var(--bg-hover);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        
+        .sticker-item:hover {
+            transform: scale(1.2);
+            background: rgba(255, 51, 102, 0.2);
+        }
+        
+        .canvas-sticker {
+            position: absolute;
+            font-size: 60px;
+            cursor: move;
+            user-select: none;
+            z-index: 99;
+            transition: transform 0.2s;
+            border: 2px solid transparent;
+        }
+        
+        .canvas-sticker:hover {
+            transform: scale(1.1);
+            border-color: var(--primary);
+        }
+        
+        .canvas-sticker.selected {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(255, 51, 102, 0.2);
+        }
+        
+        .save-preset-btn {
+            width: 100%;
+            padding: 12px;
+            background: var(--accent);
+            color: var(--bg-main);
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: all 0.3s;
+        }
+        
+        .save-preset-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 200, 51, 0.4);
+        }
+        
+        .social-share-panel {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .social-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .social-btn.facebook {
+            background: #1877F2;
+        }
+        
+        .social-btn.twitter {
+            background: #1DA1F2;
+        }
+        
+        .social-btn.line {
+            background: #00B900;
+        }
+        
+        .social-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .image-manager {
+            position: fixed;
+            bottom: 180px;
+            right: 40px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            z-index: 500;
+            display: none;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .image-manager.active {
+            display: block;
+            animation: slideUp 0.3s ease-out;
+        }
+        
+        .image-manager::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .image-manager::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 3px;
+        }
+        
+        .image-thumbnail {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+            cursor: move;
+            margin: 5px;
+            border: 2px solid var(--border);
+            transition: all 0.3s;
+        }
+        
+        .image-thumbnail:hover {
+            border-color: var(--primary);
+            transform: scale(1.05);
+        }
+        
+        .image-thumbnail.dragging {
+            opacity: 0.5;
+        }
+        
+        .floating-tools {
+            position: fixed;
+            bottom: 180px;
+            right: 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            z-index: 400;
+        }
+        
+        .tool-btn {
+            width: 60px;
+            height: 60px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        .tool-btn:hover {
+            background: var(--primary);
+            transform: scale(1.1);
+        }
+        
+        .tool-btn.active {
+            background: var(--primary);
+            box-shadow: 0 0 0 4px rgba(255, 51, 102, 0.2);
+        }
+        
+        .frame-panel {
+            position: fixed;
+            bottom: 250px;
+            right: 40px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            z-index: 500;
+            display: none;
+            min-width: 280px;
+        }
+        
+        .frame-panel.active {
+            display: block;
+            animation: slideUp 0.3s ease-out;
+        }
+        
+        .frame-options {
+            margin-bottom: 15px;
+        }
+        
+        .frame-style-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .frame-style-btn {
+            padding: 12px;
+            background: var(--bg-hover);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        
+        .frame-style-btn:hover {
+            border-color: var(--primary);
+            background: rgba(255, 51, 102, 0.1);
+        }
+        
+        .frame-style-btn.active {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border-color: var(--primary);
+            color: white;
+        }
+        
+        .frame-width-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        
+        .frame-width-label {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 600;
+            min-width: 80px;
+        }
+        
+        .frame-color-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: var(--bg-hover);
+            border-radius: 10px;
+            margin-bottom: 12px;
+        }
+        
+        .frame-color-picker {
+            width: 50px;
+            height: 40px;
+        }
+        
+        .apply-frame-btn {
+            width: 100%;
+            padding: 12px;
+            background: var(--primary);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .apply-frame-btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+        
+        .remove-frame-btn {
+            width: 100%;
+            padding: 10px;
+            background: #FF4444;
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 8px;
+        }
+        
+        .remove-frame-btn:hover {
+            background: #CC0000;
+            transform: translateY(-2px);
+        }
+        
+        .mosaic-cell.framed img {
+            border-width: 5px;
+            border-style: solid;
+            border-color: #FFFFFF;
+        }
+        
+        .mosaic-cell.framed.rounded img {
+            border-radius: 16px;
+        }
+        
+        .mosaic-cell.framed.circle img {
+            border-radius: 50%;
+        }
+        
+        .mosaic-cell.framed.diamond img {
+            clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+        }
+        
+        .canvas-frame {
+            position: absolute;
+            cursor: move;
+            user-select: none;
+            z-index: 98;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid #FFFFFF;
+            transition: transform 0.2s;
+        }
+        
+        .canvas-frame:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(255, 51, 102, 0.5);
+        }
+        
+        .canvas-frame.selected {
+            box-shadow: 0 0 0 3px rgba(255, 51, 102, 0.5);
+        }
+        
+        .delete-overlay {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 30px;
+            height: 30px;
+            background: #FF4444;
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 101;
+            font-size: 16px;
+        }
+        
+        .canvas-text:hover .delete-overlay,
+        .canvas-sticker:hover .delete-overlay {
+            display: flex;
+        }
+        
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 280px;
+            }
+            
+            .canvas.ratio-1-1 {
+                width: 500px;
+                height: 500px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+                height: calc(100vh - 140px);
+            }
+            
+            .sidebar {
+                width: 100%;
+                max-height: none;
+                height: auto;
+                max-height: 45vh;
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            .upload-section {
+                padding: 20px;
+            }
+            
+            .upload-btn {
+                padding: 16px 20px;
+                font-size: 15px;
+            }
+            
+            .layouts-section {
+                padding: 20px;
+            }
+            
+            .section-title {
+                font-size: 12px;
+                margin-bottom: 12px;
+            }
+            
+            .layout-grid {
+                gap: 10px;
+            }
+            
+            .layout-card {
+                border-radius: 12px;
+            }
+            
+            .layout-preview {
+                font-size: 36px;
+            }
+            
+            .layout-name {
+                font-size: 11px;
+                padding: 12px 8px 8px;
+            }
+            
+            .filter-grid {
+                gap: 6px;
+            }
+            
+            .filter-btn {
+                padding: 8px;
+                font-size: 11px;
+            }
+            
+            .settings-row {
+                padding: 10px;
+            }
+            
+            .canvas-container {
+                padding: 15px;
+                flex: 1;
+                overflow: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            .canvas.ratio-1-1 {
+                width: min(90vw, 380px);
+                height: min(90vw, 380px);
+            }
+            
+            .canvas.ratio-9-16 {
+                width: min(70vw, 300px);
+                height: auto;
+                aspect-ratio: 9/16;
+            }
+            
+            .canvas.ratio-4-3 {
+                width: min(90vw, 380px);
+                height: auto;
+                aspect-ratio: 4/3;
+            }
+            
+            .canvas.ratio-16-9 {
+                width: min(90vw, 380px);
+                height: auto;
+                aspect-ratio: 16/9;
+            }
+            
+            .toolbar {
+                padding: 12px 15px;
+                flex-direction: row;
+                gap: 10px;
+                flex-wrap: wrap;
+            }
+            
+            .toolbar-left {
+                display: flex;
+                flex-direction: row;
+                gap: 8px;
+                flex-wrap: wrap;
+                flex: 1;
+            }
+            
+            .btn {
+                padding: 10px 16px;
+                font-size: 13px;
+            }
+            
+            .save-preset-btn {
+                padding: 10px 16px;
+                font-size: 13px;
+            }
+            
+            .image-count {
+                padding: 10px 16px;
+                font-size: 13px;
+            }
+            
+            .count-number {
+                font-size: 20px;
+            }
+            
+            .floating-tools {
+                bottom: auto;
+                top: 60px;
+                right: 8px;
+                z-index: 600;
+                gap: 8px;
+            }
+            
+            .tool-btn {
+                width: 48px;
+                height: 48px;
+                font-size: 20px;
+            }
+            
+            .sticker-panel {
+                position: fixed;
+                bottom: auto;
+                top: 60px;
+                right: auto;
+                left: 8px;
+                right: 8px;
+                max-width: none;
+                max-height: 70vh;
+                overflow-y: auto;
+            }
+            
+            .sticker-grid {
+                grid-template-columns: repeat(6, 1fr);
+                gap: 8px;
+            }
+            
+            .sticker-item {
+                font-size: 32px;
+                padding: 8px;
+            }
+            
+            .image-manager {
+                position: fixed;
+                bottom: auto;
+                top: 60px;
+                right: auto;
+                left: 8px;
+                right: 8px;
+                max-width: none;
+                max-height: 70vh;
+            }
+            
+            .image-thumbnail {
+                width: 70px;
+                height: 70px;
+            }
+            
+            .text-controls, .frame-panel {
+                position: fixed;
+                bottom: auto;
+                top: 60px;
+                right: auto;
+                left: 8px;
+                right: 8px;
+                max-width: none;
+            }
+            
+            .logo {
+                font-size: 32px;
+            }
+            
+            .tagline {
+                font-size: 14px;
+            }
+            
+            .header {
+                padding: 16px;
+            }
+            
+            .canvas-text {
+                font-size: 20px !important;
+                padding: 6px 12px;
+                max-width: 80%;
+            }
+            
+            .canvas-sticker {
+                font-size: 36px;
+            }
+            
+            .text-input {
+                font-size: 14px;
+                padding: 10px;
+            }
+            
+            .add-text-btn {
+                padding: 10px;
+                font-size: 13px;
+            }
+            
+            input[type="color"] {
+                width: 45px;
+                height: 45px;
+            }
+            
+            .color-label {
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="noise-overlay"></div>
+    
+    <div class="app-container">
+        <div class="header">
+            <div class="header-content">
+                <div class="logo">KOLLAGE</div>
+                <div class="tagline">สร้างคอลลาจภาพที่น่าจดจำ - รองรับได้มากกว่า 100 รูป</div>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="sidebar">
+                <div class="upload-section">
+                    <button class="upload-btn" onclick="uploadImages()">
+                        <span class="upload-icon">📸</span>
+                        <span>เลือกภาพของคุณ</span>
+                    </button>
+                    <input type="file" id="fileInput" accept="image/*" multiple style="display: none;">
+                    
+                    <div class="settings-row" style="margin-top: 20px;">
+                        <div class="settings-label">ช่องว่างระหว่างภาพ</div>
+                        <div class="slider-container">
+                            <input type="range" id="gapSlider" min="0" max="10" value="3" oninput="updateGap(this.value)">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="upload-section" style="border-bottom: none; border-top: 1px solid var(--border);">
+                    <div class="section-title" style="margin-bottom: 15px;">
+                        <span>🎨 ฟิลเตอร์</span>
+                    </div>
+                    <div class="filter-grid">
+                        <button class="filter-btn active" data-filter="none" onclick="selectFilter('none')">ปกติ</button>
+                        <button class="filter-btn" data-filter="grayscale" onclick="selectFilter('grayscale')">ขาว-ดำ</button>
+                        <button class="filter-btn" data-filter="sepia" onclick="selectFilter('sepia')">Sepia</button>
+                        <button class="filter-btn" data-filter="vintage" onclick="selectFilter('vintage')">Vintage</button>
+                        <button class="filter-btn" data-filter="bright" onclick="selectFilter('bright')">สดใส</button>
+                        <button class="filter-btn" data-filter="dark" onclick="selectFilter('dark')">มืดลึก</button>
+                    </div>
+                    
+                    <div class="section-title" style="margin-bottom: 15px; margin-top: 20px;">
+                        <span>🎨 สีพื้นหลัง</span>
+                    </div>
+                    <div class="color-picker-row">
+                        <input type="color" id="bgColorPicker" value="#16161F" onchange="updateBgColor(this.value)">
+                        <span class="color-label">เลือกสีพื้นหลัง</span>
+                    </div>
+                    
+                    <div class="section-title" style="margin-bottom: 15px; margin-top: 20px;">
+                        <span>✍️ เพิ่มข้อความ</span>
+                    </div>
+                    <input type="text" id="textInput" placeholder="พิมพ์ข้อความที่ต้องการ..." class="text-input">
+                    <button class="add-text-btn" onclick="addTextToCanvas()">+ เพิ่มข้อความ</button>
+                </div>
+                
+                <div class="layouts-section">
+                    <div class="section-title">
+                        <span>🎨 เลือกรูปแบบ</span>
+                    </div>
+                    <div class="layout-grid">
+                        <div class="layout-card selected" data-layout="mosaic-auto" onclick="selectLayout('mosaic-auto')">
+                            <div class="layout-preview">🎭</div>
+                            <div class="layout-name">โมเสกอัตโนมัติ</div>
+                        </div>
+                        
+                        <div class="layout-card" data-layout="grid-square" onclick="selectLayout('grid-square')">
+                            <div class="layout-preview">▦</div>
+                            <div class="layout-name">ตารางเท่ากัน</div>
+                        </div>
+                        
+                        <div class="layout-card" data-layout="magazine" onclick="selectLayout('magazine')">
+                            <div class="layout-preview">📰</div>
+                            <div class="layout-name">สไตล์แมกกาซีน</div>
+                        </div>
+                        
+                        <div class="layout-card" data-layout="pinterest" onclick="selectLayout('pinterest')">
+                            <div class="layout-preview">📌</div>
+                            <div class="layout-name">Pinterest</div>
+                        </div>
+                        
+                        <div class="layout-card" data-layout="hexagon" onclick="selectLayout('hexagon')">
+                            <div class="layout-preview">⬡</div>
+                            <div class="layout-name">รวงผึ้ง</div>
+                        </div>
+                        
+                        <div class="layout-card" data-layout="spiral" onclick="selectLayout('spiral')">
+                            <div class="layout-preview">🌀</div>
+                            <div class="layout-name">เกลียว</div>
+                        </div>
+                        
+                        <div class="layout-card" data-layout="polaroid" onclick="selectLayout('polaroid')">
+                            <div class="layout-preview">📷</div>
+                            <div class="layout-name">โพลารอยด์</div>
+                        </div>
+                        
+                        <div class="layout-card" data-layout="brick" onclick="selectLayout('brick')">
+                            <div class="layout-preview">🧱</div>
+                            <div class="layout-name">อิฐก่อ</div>
+                        </div>
+                        
+                        <div class="layout-card" data-layout="scatter" onclick="selectLayout('scatter')">
+                            <div class="layout-preview">✨</div>
+                            <div class="layout-name">กระจาย</div>
+                        </div>
+                        
+                        <div class="layout-card" data-layout="filmstrip" onclick="selectLayout('filmstrip')">
+                            <div class="layout-preview">🎬</div>
+                            <div class="layout-name">ฟิล์ม</div>
+                        </div>
+                        
+                        <div class="layout-card" data-layout="pyramid" onclick="selectLayout('pyramid')">
+                            <div class="layout-preview">🔺</div>
+                            <div class="layout-name">พีระมิด</div>
+                        </div>
+                        
+                        <div class="layout-card" data-layout="circles" onclick="selectLayout('circles')">
+                            <div class="layout-preview">⚪</div>
+                            <div class="layout-name">วงกลม</div>
+                        </div>
+                        
+                        <div class="layout-card" data-layout="diagonal" onclick="selectLayout('diagonal')">
+                            <div class="layout-preview">📐</div>
+                            <div class="layout-name">ทแยงมุม</div>
+                        </div>
+                        
+                        <div class="layout-card" data-layout="waves" onclick="selectLayout('waves')">
+                            <div class="layout-preview">🌊</div>
+                            <div class="layout-name">คลื่น</div>
+                        </div>
+                        
+                        <div class="layout-card" data-layout="heart" onclick="selectLayout('heart')">
+                            <div class="layout-preview">❤️</div>
+                            <div class="layout-name">หัวใจ</div>
+                        </div>
+                        
+                        <div class="layout-card" data-layout="zigzag" onclick="selectLayout('zigzag')">
+                            <div class="layout-preview">⚡</div>
+                            <div class="layout-name">ซิกแซก</div>
+                        </div>
+                    </div>
+                    
+                    <div class="section-title">
+                        <span>📐 อัตราส่วนผ้าใบ</span>
+                    </div>
+                    <div class="layout-grid">
+                        <div class="layout-card selected" data-ratio="1-1" onclick="selectRatio('1-1')">
+                            <div class="layout-preview">⬜</div>
+                            <div class="layout-name">1:1 จตุรัส</div>
+                        </div>
+                        
+                        <div class="layout-card" data-ratio="9-16" onclick="selectRatio('9-16')">
+                            <div class="layout-preview">📱</div>
+                            <div class="layout-name">9:16 สตอรี่</div>
+                        </div>
+                        
+                        <div class="layout-card" data-ratio="4-3" onclick="selectRatio('4-3')">
+                            <div class="layout-preview">📺</div>
+                            <div class="layout-name">4:3 คลาสสิก</div>
+                        </div>
+                        
+                        <div class="layout-card" data-ratio="16-9" onclick="selectRatio('16-9')">
+                            <div class="layout-preview">🖥️</div>
+                            <div class="layout-name">16:9 ไวด์</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="canvas-container">
+                <div class="canvas ratio-1-1" id="canvas">
+                    <div class="canvas-content" id="canvasContent">
+                        <div class="empty-canvas">
+                            <div class="empty-icon">🎨</div>
+                            <div class="empty-text">เริ่มต้นด้วยการเลือกภาพของคุณ</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="toolbar">
+            <div class="toolbar-left">
+                <button class="btn btn-primary" onclick="generateCollage()" id="generateBtn" style="display: none;">
+                    ✨ สร้างคอลลาจ
+                </button>
+                <button class="btn btn-success" onclick="downloadCollage()" id="downloadBtn" style="display: none;">
+                    💾 บันทึกภาพ
+                </button>
+                <button class="save-preset-btn" onclick="savePreset()" id="savePresetBtn" style="display: none;">
+                    ⭐ บันทึกการตั้งค่า
+                </button>
+            </div>
+            <div class="image-count">
+                <span>ภาพทั้งหมด:</span>
+                <span class="count-number" id="imageCount">0</span>
+            </div>
+        </div>
+        
+        <div class="floating-tools" id="floatingTools" style="display: none;">
+            <button class="tool-btn" onclick="toggleStickers()" title="สติกเกอร์">
+                😊
+            </button>
+            <button class="tool-btn" onclick="toggleFrames()" title="กรอบและรูปทรง">
+                🖼️
+            </button>
+            <button class="tool-btn" onclick="toggleImageManager()" title="จัดการรูปภาพ">
+                📋
+            </button>
+            <button class="tool-btn" onclick="shareToSocial()" title="แชร์">
+                📤
+            </button>
+        </div>
+        
+        <div class="text-controls" id="textControls">
+            <div style="margin-bottom: 15px; font-weight: 700; color: var(--text);">ปรับแต่งข้อความ</div>
+            <div class="control-row">
+                <span class="control-label">ขนาด:</span>
+                <div class="control-input">
+                    <input type="range" class="size-slider" id="textSizeSlider" min="16" max="80" value="32" oninput="updateTextSize(this.value)">
+                </div>
+                <span id="textSizeValue" style="color: var(--text-muted); font-size: 12px; min-width: 40px;">32px</span>
+            </div>
+            <div class="control-row">
+                <span class="control-label">สี:</span>
+                <div class="control-input">
+                    <input type="color" class="text-color" id="textColorPicker" value="#FFFFFF" onchange="updateTextColor(this.value)">
+                </div>
+            </div>
+            <button class="delete-text-btn" onclick="deleteSelectedText()">🗑️ ลบข้อความ</button>
+        </div>
+        
+        <div class="frame-panel" id="framePanel">
+            <div style="margin-bottom: 15px; font-weight: 700; color: var(--text);">กรอบรูปภาพ</div>
+            
+            <div class="frame-options">
+                <div style="font-size: 13px; color: var(--text-muted); font-weight: 600; margin-bottom: 10px;">รูปแบบกรอบ</div>
+                <div class="frame-style-grid">
+                    <button class="frame-style-btn active" data-frame-style="none" onclick="selectFrameStyle('none')">ไม่มี</button>
+                    <button class="frame-style-btn" data-frame-style="square" onclick="selectFrameStyle('square')">⬜ เหลี่ยม</button>
+                    <button class="frame-style-btn" data-frame-style="rounded" onclick="selectFrameStyle('rounded')">▢ มน</button>
+                    <button class="frame-style-btn" data-frame-style="circle" onclick="selectFrameStyle('circle')">⭕ วงกลม</button>
+                    <button class="frame-style-btn" data-frame-style="diamond" onclick="selectFrameStyle('diamond')">💎 เพชร</button>
+                </div>
+            </div>
+            
+            <div class="frame-width-control">
+                <span class="frame-width-label">ความหนา:</span>
+                <input type="range" id="frameWidthSlider" min="1" max="15" value="5" style="flex: 1;" oninput="updateFrameWidth(this.value)">
+                <span id="frameWidthValue" style="color: var(--text-muted); font-size: 12px; min-width: 35px;">5px</span>
+            </div>
+            
+            <div class="frame-color-row">
+                <input type="color" class="frame-color-picker" id="frameColorPicker" value="#FFFFFF" onchange="updateFrameColor(this.value)">
+                <span style="color: var(--text-muted); font-size: 13px; font-weight: 600;">สีกรอบ</span>
+            </div>
+            
+            <button class="apply-frame-btn" onclick="applyFrameToImages()">✨ ใช้กรอบกับรูปภาพทั้งหมด</button>
+            <button class="remove-frame-btn" onclick="removeAllFrames()">🗑️ ลบกรอบทั้งหมด</button>
+        </div>
+        
+        <div class="sticker-panel" id="stickerPanel">
+            <div class="sticker-grid">
+                <div class="sticker-item" onclick="addSticker('❤️')">❤️</div>
+                <div class="sticker-item" onclick="addSticker('⭐')">⭐</div>
+                <div class="sticker-item" onclick="addSticker('🎉')">🎉</div>
+                <div class="sticker-item" onclick="addSticker('✨')">✨</div>
+                <div class="sticker-item" onclick="addSticker('🌸')">🌸</div>
+                <div class="sticker-item" onclick="addSticker('🦋')">🦋</div>
+                <div class="sticker-item" onclick="addSticker('🌈')">🌈</div>
+                <div class="sticker-item" onclick="addSticker('💫')">💫</div>
+                <div class="sticker-item" onclick="addSticker('🎈')">🎈</div>
+                <div class="sticker-item" onclick="addSticker('🎨')">🎨</div>
+                <div class="sticker-item" onclick="addSticker('🌟')">🌟</div>
+                <div class="sticker-item" onclick="addSticker('💖')">💖</div>
+            </div>
+        </div>
+        
+        <div class="image-manager" id="imageManager">
+            <div style="margin-bottom: 15px; font-weight: 700; color: var(--text);">จัดเรียงรูปภาพ</div>
+            <div id="imageManagerContent"></div>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script>
+        let selectedImages = [];
+        let selectedLayout = 'mosaic-auto';
+        let selectedRatio = '1-1';
+        let currentGap = 3;
+        let currentFilter = 'none';
+        let currentBgColor = '#16161F';
+        let draggedElement = null;
+        let draggedImageIndex = null;
+        let selectedTextElement = null;
+        let selectedStickerElement = null;
+        
+        // Load saved preset
+        window.addEventListener('load', function() {
+            loadPreset();
+            setupDragAndDrop();
+            
+            // Close panels when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.sticker-panel') && !e.target.closest('[onclick*="toggleStickers"]')) {
+                    document.getElementById('stickerPanel').classList.remove('active');
+                }
+                if (!e.target.closest('.image-manager') && !e.target.closest('[onclick*="toggleImageManager"]')) {
+                    document.getElementById('imageManager').classList.remove('active');
+                }
+                if (!e.target.closest('.frame-panel') && !e.target.closest('[onclick*="toggleFrames"]')) {
+                    document.getElementById('framePanel').classList.remove('active');
+                }
+                if (!e.target.closest('.text-controls') && !e.target.closest('.canvas-text')) {
+                    document.getElementById('textControls').classList.remove('active');
+                    if (selectedTextElement) {
+                        selectedTextElement.classList.remove('selected');
+                        selectedTextElement = null;
+                    }
+                }
+            });
+        });
+        
+        // Setup file input
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            handleFileSelection(e.target.files);
+        });
+        
+        function uploadImages() {
+            document.getElementById('fileInput').click();
+        }
+        
+        async function handleFileSelection(files) {
+            const filesArray = Array.from(files);
+            
+            if (filesArray.length === 0) return;
+            
+            showLoading(true);
+            
+            let loadedCount = 0;
+            const totalFiles = filesArray.length;
+            
+            for (const file of filesArray) {
+                if (!file.type.startsWith('image/')) continue;
+                
+                try {
+                    const dataUrl = await readFileAsDataURL(file);
+                    selectedImages.push(dataUrl);
+                    loadedCount++;
+                    updateLoadingText(`กำลังโหลดภาพ... ${loadedCount}/${totalFiles}`);
+                } catch (error) {
+                    console.error('Error loading image:', error);
+                }
+            }
+            
+            showLoading(false);
+            updateUI();
+        }
+        
+        function readFileAsDataURL(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        function updateUI() {
+            const count = selectedImages.length;
+            document.getElementById('imageCount').textContent = count;
+            
+            if (count > 0) {
+                document.getElementById('generateBtn').style.display = 'flex';
+                document.getElementById('savePresetBtn').style.display = 'block';
+                document.getElementById('floatingTools').style.display = 'flex';
+            }
+            
+            updateImageManager();
+        }
+        
+        function setupDragAndDrop() {
+            const canvas = document.getElementById('canvas');
+            
+            // Prevent default drag behaviors
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                canvas.addEventListener(eventName, preventDefaults, false);
+                document.body.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            // Highlight drop area
+            ['dragenter', 'dragover'].forEach(eventName => {
+                canvas.addEventListener(eventName, () => {
+                    canvas.classList.add('drop-zone');
+                }, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                canvas.addEventListener(eventName, () => {
+                    canvas.classList.remove('drop-zone');
+                }, false);
+            });
+            
+            // Handle dropped files
+            canvas.addEventListener('drop', function(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                handleFileSelection(files);
+            }, false);
+        }
+        
+        function selectLayout(layout) {
+            selectedLayout = layout;
+            document.querySelectorAll('[data-layout]').forEach(card => {
+                card.classList.remove('selected');
+            });
+            document.querySelector(`[data-layout="${layout}"]`).classList.add('selected');
+        }
+        
+        function selectRatio(ratio) {
+            selectedRatio = ratio;
+            document.querySelectorAll('[data-ratio]').forEach(card => {
+                card.classList.remove('selected');
+            });
+            document.querySelector(`[data-ratio="${ratio}"]`).classList.add('selected');
+            
+            const canvas = document.getElementById('canvas');
+            canvas.className = `canvas ratio-${ratio}`;
+        }
+        
+        function updateGap(value) {
+            currentGap = parseInt(value);
+            if (document.getElementById('downloadBtn').style.display !== 'none') {
+                generateCollage();
+            }
+        }
+        
+        function selectFilter(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-filter="${filter}"]`).classList.add('active');
+            
+            if (document.getElementById('downloadBtn').style.display !== 'none') {
+                applyFilter();
+            }
+        }
+        
+        function applyFilter() {
+            const images = document.querySelectorAll('.mosaic-cell img');
+            images.forEach(img => {
+                let filterStyle = '';
+                switch(currentFilter) {
+                    case 'grayscale':
+                        filterStyle = 'grayscale(100%)';
+                        break;
+                    case 'sepia':
+                        filterStyle = 'sepia(100%)';
+                        break;
+                    case 'vintage':
+                        filterStyle = 'sepia(50%) contrast(1.2) brightness(0.9)';
+                        break;
+                    case 'bright':
+                        filterStyle = 'brightness(1.3) contrast(1.1) saturate(1.3)';
+                        break;
+                    case 'dark':
+                        filterStyle = 'brightness(0.7) contrast(1.3)';
+                        break;
+                    default:
+                        filterStyle = 'brightness(0.95) contrast(1.05)';
+                }
+                img.style.filter = filterStyle;
+            });
+        }
+        
+        function updateBgColor(color) {
+            currentBgColor = color;
+            const canvasContent = document.getElementById('canvasContent');
+            if (canvasContent.querySelector('.mosaic-grid')) {
+                canvasContent.querySelector('.mosaic-grid').style.background = color;
+            }
+        }
+        
+        function addTextToCanvas() {
+            const textInput = document.getElementById('textInput');
+            const text = textInput.value.trim();
+            
+            if (!text) {
+                alert('กรุณาพิมพ์ข้อความก่อน');
+                return;
+            }
+            
+            const canvasContent = document.getElementById('canvasContent');
+            const textElement = document.createElement('div');
+            textElement.className = 'canvas-text';
+            textElement.textContent = text;
+            textElement.style.left = '50%';
+            textElement.style.top = '20%';
+            textElement.style.transform = 'translateX(-50%)';
+            textElement.style.fontSize = '32px';
+            textElement.style.color = '#FFFFFF';
+            textElement.style.position = 'absolute';
+            
+            // Add delete button
+            const deleteBtn = document.createElement('div');
+            deleteBtn.className = 'delete-overlay';
+            deleteBtn.innerHTML = '✕';
+            deleteBtn.onclick = function(e) {
+                e.stopPropagation();
+                textElement.remove();
+                document.getElementById('textControls').classList.remove('active');
+                selectedTextElement = null;
+            };
+            textElement.appendChild(deleteBtn);
+            
+            // Click to select and show controls
+            textElement.addEventListener('click', function(e) {
+                e.stopPropagation();
+                selectText(textElement);
+            });
+            
+            makeDraggable(textElement);
+            canvasContent.appendChild(textElement);
+            
+            textInput.value = '';
+        }
+        
+        function selectText(element) {
+            // Deselect previous
+            if (selectedTextElement) {
+                selectedTextElement.classList.remove('selected');
+            }
+            
+            selectedTextElement = element;
+            element.classList.add('selected');
+            
+            // Show controls
+            const controls = document.getElementById('textControls');
+            controls.classList.add('active');
+            
+            // Update controls with current values
+            const currentSize = parseInt(element.style.fontSize) || 32;
+            const currentColor = rgbToHex(element.style.color) || '#FFFFFF';
+            
+            document.getElementById('textSizeSlider').value = currentSize;
+            document.getElementById('textSizeValue').textContent = currentSize + 'px';
+            document.getElementById('textColorPicker').value = currentColor;
+        }
+        
+        function rgbToHex(rgb) {
+            if (!rgb || rgb.startsWith('#')) return rgb || '#FFFFFF';
+            const values = rgb.match(/\d+/g);
+            if (!values) return '#FFFFFF';
+            return '#' + values.map(x => {
+                const hex = parseInt(x).toString(16);
+                return hex.length === 1 ? '0' + hex : hex;
+            }).join('');
+        }
+        
+        function updateTextSize(size) {
+            document.getElementById('textSizeValue').textContent = size + 'px';
+            if (selectedTextElement) {
+                selectedTextElement.style.fontSize = size + 'px';
+            }
+        }
+        
+        function updateTextColor(color) {
+            if (selectedTextElement) {
+                selectedTextElement.style.color = color;
+            }
+        }
+        
+        function deleteSelectedText() {
+            if (selectedTextElement) {
+                selectedTextElement.remove();
+                selectedTextElement = null;
+                document.getElementById('textControls').classList.remove('active');
+            }
+        }
+        
+        function toggleStickers() {
+            const panel = document.getElementById('stickerPanel');
+            panel.classList.toggle('active');
+            document.getElementById('framePanel').classList.remove('active');
+        }
+        
+        function toggleFrames() {
+            const panel = document.getElementById('framePanel');
+            panel.classList.toggle('active');
+            document.getElementById('stickerPanel').classList.remove('active');
+        }
+        
+        let currentFrameStyle = 'none';
+        let currentFrameWidth = 5;
+        let currentFrameColor = '#FFFFFF';
+        
+        function selectFrameStyle(style) {
+            currentFrameStyle = style;
+            document.querySelectorAll('.frame-style-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-frame-style="${style}"]`).classList.add('active');
+        }
+        
+        function updateFrameWidth(width) {
+            currentFrameWidth = parseInt(width);
+            document.getElementById('frameWidthValue').textContent = width + 'px';
+        }
+        
+        function updateFrameColor(color) {
+            currentFrameColor = color;
+        }
+        
+        function applyFrameToImages() {
+            const cells = document.querySelectorAll('.mosaic-cell');
+            
+            cells.forEach(cell => {
+                const img = cell.querySelector('img');
+                if (!img) return;
+                
+                // Remove all frame classes
+                cell.classList.remove('framed', 'rounded', 'circle', 'diamond');
+                
+                if (currentFrameStyle === 'none') {
+                    img.style.border = 'none';
+                    img.style.borderRadius = '';
+                    img.style.clipPath = '';
+                    return;
+                }
+                
+                // Apply frame
+                cell.classList.add('framed');
+                img.style.borderWidth = currentFrameWidth + 'px';
+                img.style.borderStyle = 'solid';
+                img.style.borderColor = currentFrameColor;
+                img.style.clipPath = '';
+                img.style.borderRadius = '';
+                
+                switch(currentFrameStyle) {
+                    case 'square':
+                        img.style.borderRadius = '4px';
+                        break;
+                    case 'rounded':
+                        cell.classList.add('rounded');
+                        break;
+                    case 'circle':
+                        cell.classList.add('circle');
+                        break;
+                    case 'diamond':
+                        cell.classList.add('diamond');
+                        img.style.borderRadius = '0';
+                        break;
+                }
+            });
+        }
+        
+        function removeAllFrames() {
+            const cells = document.querySelectorAll('.mosaic-cell');
+            cells.forEach(cell => {
+                const img = cell.querySelector('img');
+                if (img) {
+                    img.style.border = 'none';
+                    img.style.borderRadius = '';
+                    img.style.clipPath = '';
+                }
+                cell.classList.remove('framed', 'rounded', 'circle', 'diamond');
+            });
+            
+            // Reset to default
+            currentFrameStyle = 'none';
+            selectFrameStyle('none');
+        }
+        
+        function addSticker(emoji) {
+            const canvasContent = document.getElementById('canvasContent');
+            const sticker = document.createElement('div');
+            sticker.className = 'canvas-sticker';
+            sticker.textContent = emoji;
+            sticker.style.left = (Math.random() * 60 + 20) + '%';
+            sticker.style.top = (Math.random() * 60 + 20) + '%';
+            sticker.style.position = 'absolute';
+            
+            // Add delete button
+            const deleteBtn = document.createElement('div');
+            deleteBtn.className = 'delete-overlay';
+            deleteBtn.innerHTML = '✕';
+            deleteBtn.onclick = function(e) {
+                e.stopPropagation();
+                sticker.remove();
+            };
+            sticker.appendChild(deleteBtn);
+            
+            makeDraggable(sticker);
+            canvasContent.appendChild(sticker);
+        }
+        
+        function makeDraggable(element) {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            
+            element.onmousedown = dragMouseDown;
+            element.ontouchstart = dragTouchStart;
+            
+            function dragMouseDown(e) {
+                // Ignore if clicking on delete button
+                if (e.target.classList.contains('delete-overlay')) return;
+                
+                e.preventDefault();
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
+                element.classList.add('dragging');
+            }
+            
+            function dragTouchStart(e) {
+                // Ignore if clicking on delete button
+                if (e.target.classList.contains('delete-overlay')) return;
+                
+                const touch = e.touches[0];
+                pos3 = touch.clientX;
+                pos4 = touch.clientY;
+                document.ontouchend = closeDragElement;
+                document.ontouchmove = elementTouchDrag;
+                element.classList.add('dragging');
+            }
+            
+            function elementDrag(e) {
+                e.preventDefault();
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                element.style.top = (element.offsetTop - pos2) + "px";
+                element.style.left = (element.offsetLeft - pos1) + "px";
+                element.style.transform = 'none';
+            }
+            
+            function elementTouchDrag(e) {
+                const touch = e.touches[0];
+                pos1 = pos3 - touch.clientX;
+                pos2 = pos4 - touch.clientY;
+                pos3 = touch.clientX;
+                pos4 = touch.clientY;
+                element.style.top = (element.offsetTop - pos2) + "px";
+                element.style.left = (element.offsetLeft - pos1) + "px";
+                element.style.transform = 'none';
+            }
+            
+            function closeDragElement() {
+                document.onmouseup = null;
+                document.onmousemove = null;
+                document.ontouchend = null;
+                document.ontouchmove = null;
+                element.classList.remove('dragging');
+            }
+        }
+        
+        function toggleImageManager() {
+            const manager = document.getElementById('imageManager');
+            manager.classList.toggle('active');
+        }
+        
+        let updateManagerTimeout;
+        function updateImageManager() {
+            // Debounce to improve performance
+            clearTimeout(updateManagerTimeout);
+            updateManagerTimeout = setTimeout(() => {
+                const content = document.getElementById('imageManagerContent');
+                content.innerHTML = '';
+                
+                // Show loading for large sets
+                if (selectedImages.length > 50) {
+                    content.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 20px;">กำลังโหลด...</div>';
+                    
+                    setTimeout(() => {
+                        renderThumbnails(content);
+                    }, 10);
+                } else {
+                    renderThumbnails(content);
+                }
+            }, 100);
+        }
+        
+        function renderThumbnails(content) {
+            content.innerHTML = '';
+            const fragment = document.createDocumentFragment();
+            
+            selectedImages.forEach((img, index) => {
+                const thumbnail = document.createElement('img');
+                thumbnail.src = img;
+                thumbnail.className = 'image-thumbnail';
+                thumbnail.draggable = true;
+                thumbnail.dataset.index = index;
+                
+                thumbnail.addEventListener('dragstart', function(e) {
+                    draggedImageIndex = index;
+                    this.classList.add('dragging');
+                });
+                
+                thumbnail.addEventListener('dragend', function(e) {
+                    this.classList.remove('dragging');
+                });
+                
+                thumbnail.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                });
+                
+                thumbnail.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    const targetIndex = parseInt(this.dataset.index);
+                    
+                    if (draggedImageIndex !== null && draggedImageIndex !== targetIndex) {
+                        // Swap images
+                        const temp = selectedImages[draggedImageIndex];
+                        selectedImages[draggedImageIndex] = selectedImages[targetIndex];
+                        selectedImages[targetIndex] = temp;
+                        
+                        updateImageManager();
+                        if (document.getElementById('downloadBtn').style.display !== 'none') {
+                            generateCollage();
+                        }
+                    }
+                });
+                
+                fragment.appendChild(thumbnail);
+            });
+            
+            content.appendChild(fragment);
+        }
+        
+        function savePreset() {
+            const preset = {
+                layout: selectedLayout,
+                ratio: selectedRatio,
+                gap: currentGap,
+                filter: currentFilter,
+                bgColor: currentBgColor
+            };
+            
+            localStorage.setItem('kollagePreset', JSON.stringify(preset));
+            
+            // Show success message
+            const btn = document.getElementById('savePresetBtn');
+            const originalText = btn.textContent;
+            btn.textContent = '✅ บันทึกแล้ว!';
+            setTimeout(() => {
+                btn.textContent = originalText;
+            }, 2000);
+        }
+        
+        function loadPreset() {
+            const saved = localStorage.getItem('kollagePreset');
+            if (saved) {
+                try {
+                    const preset = JSON.parse(saved);
+                    
+                    if (preset.layout) selectLayout(preset.layout);
+                    if (preset.ratio) selectRatio(preset.ratio);
+                    if (preset.gap !== undefined) {
+                        currentGap = preset.gap;
+                        document.getElementById('gapSlider').value = preset.gap;
+                    }
+                    if (preset.filter) selectFilter(preset.filter);
+                    if (preset.bgColor) {
+                        currentBgColor = preset.bgColor;
+                        document.getElementById('bgColorPicker').value = preset.bgColor;
+                    }
+                } catch (e) {
+                    console.error('Error loading preset:', e);
+                }
+            }
+        }
+        
+        function shareToSocial() {
+            // Create share panel
+            const existingPanel = document.getElementById('sharePanel');
+            if (existingPanel) {
+                existingPanel.remove();
+            }
+            
+            const panel = document.createElement('div');
+            panel.id = 'sharePanel';
+            panel.style.cssText = `
+                position: fixed;
+                bottom: 250px;
+                right: 40px;
+                background: var(--bg-card);
+                border: 1px solid var(--border);
+                border-radius: 16px;
+                padding: 20px;
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+                z-index: 600;
+                animation: slideUp 0.3s ease-out;
+            `;
+            
+            panel.innerHTML = `
+                <div style="margin-bottom: 15px; font-weight: 700; color: var(--text);">แชร์คอลลาจของคุณ</div>
+                <div class="social-share-panel">
+                    <button class="social-btn facebook" onclick="shareToFacebook()">📘</button>
+                    <button class="social-btn twitter" onclick="shareToTwitter()">🐦</button>
+                    <button class="social-btn line" onclick="shareToLine()">💚</button>
+                </div>
+                <button onclick="copyShareLink()" style="width: 100%; margin-top: 10px; padding: 10px; background: var(--bg-hover); border: 1px solid var(--border); border-radius: 10px; color: var(--text); cursor: pointer; font-weight: 600;">
+                    🔗 คัดลอกลิงก์
+                </button>
+            `;
+            
+            document.body.appendChild(panel);
+            
+            // Close panel when clicking outside
+            setTimeout(() => {
+                document.addEventListener('click', function closePanel(e) {
+                    if (!panel.contains(e.target) && !e.target.closest('.tool-btn')) {
+                        panel.remove();
+                        document.removeEventListener('click', closePanel);
+                    }
+                });
+            }, 100);
+        }
+        
+        function shareToFacebook() {
+            window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(window.location.href), '_blank');
+        }
+        
+        function shareToTwitter() {
+            window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent('สร้างคอลลาจสวยๆ ด้วย KOLLAGE') + '&url=' + encodeURIComponent(window.location.href), '_blank');
+        }
+        
+        function shareToLine() {
+            window.open('https://social-plugins.line.me/lineit/share?url=' + encodeURIComponent(window.location.href), '_blank');
+        }
+        
+        function copyShareLink() {
+            navigator.clipboard.writeText(window.location.href).then(() => {
+                alert('คัดลอกลิงก์แล้ว!');
+            });
+        }
+        
+        function generateCollage() {
+            if (selectedImages.length === 0) return;
+            
+            showLoading(true, 'กำลังสร้างคอลลาจ...');
+            
+            setTimeout(() => {
+                const content = document.getElementById('canvasContent');
+                
+                // Preserve text and stickers
+                const texts = Array.from(content.querySelectorAll('.canvas-text'));
+                const stickers = Array.from(content.querySelectorAll('.canvas-sticker'));
+                
+                // Store current frame settings
+                const hasFrames = currentFrameStyle !== 'none';
+                
+                content.innerHTML = '';
+                
+                try {
+                    switch(selectedLayout) {
+                        case 'mosaic-auto':
+                            generateMosaicAuto(content);
+                            break;
+                        case 'grid-square':
+                            generateGridSquare(content);
+                            break;
+                        case 'magazine':
+                            generateMagazine(content);
+                            break;
+                        case 'pinterest':
+                            generatePinterest(content);
+                            break;
+                        case 'hexagon':
+                            generateHexagon(content);
+                            break;
+                        case 'spiral':
+                            generateSpiral(content);
+                            break;
+                        case 'polaroid':
+                            generatePolaroid(content);
+                            break;
+                        case 'brick':
+                            generateBrick(content);
+                            break;
+                        case 'scatter':
+                            generateScatter(content);
+                            break;
+                        case 'filmstrip':
+                            generateFilmstrip(content);
+                            break;
+                        case 'pyramid':
+                            generatePyramid(content);
+                            break;
+                        case 'circles':
+                            generateCircles(content);
+                            break;
+                        case 'diagonal':
+                            generateDiagonal(content);
+                            break;
+                        case 'waves':
+                            generateWaves(content);
+                            break;
+                        case 'heart':
+                            generateHeart(content);
+                            break;
+                        case 'zigzag':
+                            generateZigzag(content);
+                            break;
+                    }
+                    
+                    // Apply background color
+                    const grid = content.querySelector('.mosaic-grid, div');
+                    if (grid) {
+                        if (grid.classList.contains('mosaic-grid')) {
+                            grid.style.background = currentBgColor;
+                        }
+                    }
+                    
+                    // Apply filter
+                    setTimeout(() => {
+                        applyFilter();
+                        
+                        // Reapply frames if they were set
+                        if (hasFrames) {
+                            applyFrameToImages();
+                        }
+                    }, 100);
+                    
+                    // Restore text and stickers
+                    texts.forEach(text => content.appendChild(text));
+                    stickers.forEach(sticker => content.appendChild(sticker));
+                    
+                    document.getElementById('downloadBtn').style.display = 'flex';
+                } catch (error) {
+                    console.error('Error generating collage:', error);
+                    alert('เกิดข้อผิดพลาดในการสร้างคอลลาจ กรุณาลองใหม่อีกครั้ง');
+                }
+                
+                showLoading(false);
+            }, 100);
+        }
+        
+        function generateMosaicAuto(container) {
+            const grid = document.createElement('div');
+            grid.className = 'mosaic-grid';
+            grid.style.gap = `${currentGap}px`;
+            grid.style.padding = `${currentGap}px`;
+            grid.style.background = currentBgColor;
+            
+            const count = selectedImages.length;
+            let cols, rows;
+            
+            // Calculate grid size
+            if (count <= 4) {
+                cols = rows = 2;
+            } else if (count <= 9) {
+                cols = rows = 3;
+            } else if (count <= 16) {
+                cols = rows = 4;
+            } else if (count <= 25) {
+                cols = rows = 5;
+            } else if (count <= 36) {
+                cols = rows = 6;
+            } else if (count <= 49) {
+                cols = rows = 7;
+            } else if (count <= 64) {
+                cols = rows = 8;
+            } else if (count <= 81) {
+                cols = rows = 9;
+            } else if (count <= 100) {
+                cols = rows = 10;
+            } else if (count <= 121) {
+                cols = rows = 11;
+            } else if (count <= 144) {
+                cols = rows = 12;
+            } else {
+                cols = rows = Math.ceil(Math.sqrt(count));
+            }
+            
+            grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            grid.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+            
+            const maxCells = cols * rows;
+            const largeImages = new Set();
+            const numLarge = Math.min(Math.floor(count / 12), Math.floor(maxCells / 8));
+            
+            // Select random cells for large images
+            while (largeImages.size < numLarge && largeImages.size < count) {
+                const index = Math.floor(Math.random() * Math.min(count, maxCells - cols - 1));
+                if (index % cols < cols - 1 && Math.floor(index / cols) < rows - 1) {
+                    largeImages.add(index);
+                }
+            }
+            
+            selectedImages.forEach((img, index) => {
+                if (index >= maxCells) return;
+                
+                const cell = document.createElement('div');
+                cell.className = 'mosaic-cell';
+                
+                if (largeImages.has(index)) {
+                    cell.style.gridColumn = 'span 2';
+                    cell.style.gridRow = 'span 2';
+                }
+                
+                const imgEl = document.createElement('img');
+                imgEl.src = img;
+                imgEl.style.animation = `fadeIn 0.5s ease-out ${index * 0.02}s both`;
+                cell.appendChild(imgEl);
+                grid.appendChild(cell);
+            });
+            
+            container.appendChild(grid);
+            makeCellsDraggable();
+        }
+        
+        function generateGridSquare(container) {
+            const grid = document.createElement('div');
+            grid.className = 'mosaic-grid';
+            grid.style.gap = `${currentGap}px`;
+            grid.style.padding = `${currentGap}px`;
+            grid.style.background = currentBgColor;
+            
+            const count = selectedImages.length;
+            const cols = Math.ceil(Math.sqrt(count));
+            const rows = Math.ceil(count / cols);
+            
+            grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            grid.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+            
+            selectedImages.forEach((img, index) => {
+                const cell = document.createElement('div');
+                cell.className = 'mosaic-cell';
+                
+                const imgEl = document.createElement('img');
+                imgEl.src = img;
+                imgEl.style.animation = `fadeIn 0.4s ease-out ${index * 0.015}s both`;
+                cell.appendChild(imgEl);
+                grid.appendChild(cell);
+            });
+            
+            container.appendChild(grid);
+            makeCellsDraggable();
+        }
+        
+        function generateMagazine(container) {
+            const grid = document.createElement('div');
+            grid.className = 'mosaic-grid';
+            grid.style.gap = `${currentGap}px`;
+            grid.style.padding = `${currentGap}px`;
+            grid.style.background = currentBgColor;
+            grid.style.gridTemplateColumns = 'repeat(12, 1fr)';
+            grid.style.gridTemplateRows = 'repeat(12, 1fr)';
+            
+            const layouts = [
+                {col: 'span 6', row: 'span 6'},
+                {col: 'span 3', row: 'span 3'},
+                {col: 'span 3', row: 'span 3'},
+                {col: 'span 4', row: 'span 4'},
+                {col: 'span 4', row: 'span 4'},
+                {col: 'span 4', row: 'span 4'},
+                {col: 'span 3', row: 'span 3'},
+                {col: 'span 3', row: 'span 3'},
+                {col: 'span 6', row: 'span 3'},
+            ];
+            
+            selectedImages.forEach((img, index) => {
+                const cell = document.createElement('div');
+                cell.className = 'mosaic-cell';
+                
+                if (index < layouts.length) {
+                    cell.style.gridColumn = layouts[index].col;
+                    cell.style.gridRow = layouts[index].row;
+                } else {
+                    cell.style.gridColumn = 'span 2';
+                    cell.style.gridRow = 'span 2';
+                }
+                
+                const imgEl = document.createElement('img');
+                imgEl.src = img;
+                imgEl.style.animation = `fadeIn 0.4s ease-out ${index * 0.02}s both`;
+                cell.appendChild(imgEl);
+                grid.appendChild(cell);
+            });
+            
+            container.appendChild(grid);
+            makeCellsDraggable();
+        }
+        
+        function generatePinterest(container) {
+            container.style.display = 'flex';
+            container.style.gap = `${currentGap}px`;
+            container.style.padding = `${currentGap}px`;
+            container.style.background = currentBgColor;
+            
+            const numCols = selectedRatio === '9-16' ? 3 : 4;
+            const columns = [];
+            
+            for (let i = 0; i < numCols; i++) {
+                const col = document.createElement('div');
+                col.style.flex = '1';
+                col.style.display = 'flex';
+                col.style.flexDirection = 'column';
+                col.style.gap = `${currentGap}px`;
+                columns.push(col);
+                container.appendChild(col);
+            }
+            
+            selectedImages.forEach((img, index) => {
+                const colIndex = index % numCols;
+                const cell = document.createElement('div');
+                cell.className = 'mosaic-cell';
+                cell.style.borderRadius = '8px';
+                
+                const imgEl = document.createElement('img');
+                imgEl.src = img;
+                imgEl.style.borderRadius = '8px';
+                imgEl.style.animation = `fadeIn 0.4s ease-out ${index * 0.02}s both`;
+                cell.appendChild(imgEl);
+                
+                columns[colIndex].appendChild(cell);
+            });
+        }
+        
+        function generateHexagon(container) {
+            const wrapper = document.createElement('div');
+            wrapper.style.width = '100%';
+            wrapper.style.height = '100%';
+            wrapper.style.display = 'flex';
+            wrapper.style.flexWrap = 'wrap';
+            wrapper.style.alignContent = 'center';
+            wrapper.style.justifyContent = 'center';
+            wrapper.style.padding = '20px';
+            wrapper.style.gap = '10px';
+            wrapper.style.background = currentBgColor;
+            
+            const hexSize = Math.min(100, Math.max(50, 600 / Math.sqrt(selectedImages.length)));
+            
+            selectedImages.forEach((img, index) => {
+                const hex = document.createElement('div');
+                hex.style.width = `${hexSize}px`;
+                hex.style.height = `${hexSize * 1.15}px`;
+                hex.style.clipPath = 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)';
+                hex.style.overflow = 'hidden';
+                hex.style.position = 'relative';
+                
+                const imgEl = document.createElement('img');
+                imgEl.src = img;
+                imgEl.style.width = '100%';
+                imgEl.style.height = '100%';
+                imgEl.style.objectFit = 'cover';
+                imgEl.style.animation = `fadeIn 0.4s ease-out ${index * 0.02}s both`;
+                
+                hex.appendChild(imgEl);
+                wrapper.appendChild(hex);
+            });
+            
+            container.appendChild(wrapper);
+        }
+        
+        function generateSpiral(container) {
+            const wrapper = document.createElement('div');
+            wrapper.style.width = '100%';
+            wrapper.style.height = '100%';
+            wrapper.style.position = 'relative';
+            wrapper.style.display = 'flex';
+            wrapper.style.alignItems = 'center';
+            wrapper.style.justifyContent = 'center';
+            wrapper.style.background = currentBgColor;
+            
+            const centerX = 50;
+            const centerY = 50;
+            const maxRadius = 45;
+            
+            selectedImages.forEach((img, index) => {
+                const angle = index * 0.5;
+                const radius = (index / selectedImages.length) * maxRadius;
+                
+                const x = centerX + radius * Math.cos(angle);
+                const y = centerY + radius * Math.sin(angle);
+                
+                const size = Math.max(5, 15 - (index / selectedImages.length) * 10);
+                
+                const cell = document.createElement('div');
+                cell.style.position = 'absolute';
+                cell.style.left = `${x}%`;
+                cell.style.top = `${y}%`;
+                cell.style.width = `${size}%`;
+                cell.style.height = `${size}%`;
+                cell.style.transform = 'translate(-50%, -50%)';
+                cell.style.borderRadius = '50%';
+                cell.style.overflow = 'hidden';
+                cell.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+                
+                const imgEl = document.createElement('img');
+                imgEl.src = img;
+                imgEl.style.width = '100%';
+                imgEl.style.height = '100%';
+                imgEl.style.objectFit = 'cover';
+                imgEl.style.animation = `fadeIn 0.4s ease-out ${index * 0.02}s both, spin 0.6s ease-out ${index * 0.02}s both`;
+                
+                cell.appendChild(imgEl);
+                wrapper.appendChild(cell);
+            });
+            
+            container.appendChild(wrapper);
+        }
+        
+        function makeCellsDraggable() {
+            const cells = document.querySelectorAll('.mosaic-cell');
+            let draggedCell = null;
+            
+            cells.forEach((cell, index) => {
+                cell.draggable = true;
+                cell.dataset.index = index;
+                
+                cell.addEventListener('dragstart', function(e) {
+                    draggedCell = this;
+                    this.classList.add('dragging');
+                    e.dataTransfer.effectAllowed = 'move';
+                });
+                
+                cell.addEventListener('dragend', function(e) {
+                    this.classList.remove('dragging');
+                });
+                
+                cell.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                });
+                
+                cell.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    if (draggedCell && draggedCell !== this) {
+                        // Swap images
+                        const draggedImg = draggedCell.querySelector('img').src;
+                        const targetImg = this.querySelector('img').src;
+                        
+                        draggedCell.querySelector('img').src = targetImg;
+                        this.querySelector('img').src = draggedImg;
+                    }
+                });
+            });
+        }
+        
+        // New layout functions
+        function generatePolaroid(container) {
+            const grid = document.createElement('div');
+            grid.className = 'mosaic-grid';
+            grid.style.gap = `${currentGap * 3}px`;
+            grid.style.padding = `${currentGap * 2}px`;
+            grid.style.background = currentBgColor;
+            
+            const count = selectedImages.length;
+            const cols = Math.ceil(Math.sqrt(count));
+            
+            grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            
+            selectedImages.forEach((img, index) => {
+                const cell = document.createElement('div');
+                cell.className = 'mosaic-cell';
+                cell.style.padding = '12px 12px 40px 12px';
+                cell.style.background = 'white';
+                cell.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
+                cell.style.transform = `rotate(${(Math.random() - 0.5) * 6}deg)`;
+                
+                const imgEl = document.createElement('img');
+                imgEl.src = img;
+                imgEl.style.animation = `fadeIn 0.4s ease-out ${index * 0.02}s both`;
+                cell.appendChild(imgEl);
+                grid.appendChild(cell);
+            });
+            
+            container.appendChild(grid);
+            makeCellsDraggable();
+        }
+        
+        function generateBrick(container) {
+            const grid = document.createElement('div');
+            grid.className = 'mosaic-grid';
+            grid.style.gap = `${currentGap}px`;
+            grid.style.padding = `${currentGap}px`;
+            grid.style.background = currentBgColor;
+            
+            const cols = 6;
+            grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            grid.style.gridAutoRows = '100px';
+            
+            selectedImages.forEach((img, index) => {
+                const cell = document.createElement('div');
+                cell.className = 'mosaic-cell';
+                
+                // Brick pattern
+                if (index % 3 === 0) {
+                    cell.style.gridColumn = 'span 3';
+                } else if (index % 3 === 1) {
+                    cell.style.gridColumn = 'span 2';
+                } else {
+                    cell.style.gridColumn = 'span 1';
+                }
+                
+                const imgEl = document.createElement('img');
+                imgEl.src = img;
+                imgEl.style.animation = `fadeIn 0.4s ease-out ${index * 0.02}s both`;
+                cell.appendChild(imgEl);
+                grid.appendChild(cell);
+            });
+            
+            container.appendChild(grid);
+            makeCellsDraggable();
+        }
+        
+        function generateScatter(container) {
+            const wrapper = document.createElement('div');
+            wrapper.style.width = '100%';
+            wrapper.style.height = '100%';
+            wrapper.style.position = 'relative';
+            wrapper.style.background = currentBgColor;
+            
+            selectedImages.forEach((img, index) => {
+                const cell = document.createElement('div');
+                cell.className = 'mosaic-cell';
+                cell.style.position = 'absolute';
+                cell.style.width = `${80 + Math.random() * 100}px`;
+                cell.style.height = `${80 + Math.random() * 100}px`;
+                cell.style.left = `${Math.random() * 85}%`;
+                cell.style.top = `${Math.random() * 85}%`;
+                cell.style.transform = `rotate(${(Math.random() - 0.5) * 30}deg)`;
+                cell.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+                cell.style.zIndex = index;
+                
+                const imgEl = document.createElement('img');
+                imgEl.src = img;
+                imgEl.style.animation = `fadeIn 0.4s ease-out ${index * 0.02}s both`;
+                cell.appendChild(imgEl);
+                wrapper.appendChild(cell);
+            });
+            
+            container.appendChild(wrapper);
+        }
+        
+        function generateFilmstrip(container) {
+            const wrapper = document.createElement('div');
+            wrapper.style.display = 'flex';
+            wrapper.style.flexDirection = 'column';
+            wrapper.style.gap = `${currentGap * 2}px`;
+            wrapper.style.padding = `${currentGap * 2}px`;
+            wrapper.style.background = '#000';
+            wrapper.style.width = '100%';
+            wrapper.style.height = '100%';
+            wrapper.style.overflowY = 'auto';
+            
+            selectedImages.forEach((img, index) => {
+                const strip = document.createElement('div');
+                strip.style.display = 'flex';
+                strip.style.gap = '4px';
+                strip.style.padding = '8px';
+                strip.style.background = '#222';
+                
+                const cell = document.createElement('div');
+                cell.className = 'mosaic-cell';
+                cell.style.flex = '1';
+                cell.style.height = '120px';
+                
+                const imgEl = document.createElement('img');
+                imgEl.src = img;
+                imgEl.style.animation = `fadeIn 0.4s ease-out ${index * 0.02}s both`;
+                cell.appendChild(imgEl);
+                strip.appendChild(cell);
+                wrapper.appendChild(strip);
+            });
+            
+            container.appendChild(wrapper);
+        }
+        
+        function generatePyramid(container) {
+            const wrapper = document.createElement('div');
+            wrapper.style.display = 'flex';
+            wrapper.style.flexDirection = 'column';
+            wrapper.style.gap = `${currentGap}px`;
+            wrapper.style.padding = `${currentGap}px`;
+            wrapper.style.background = currentBgColor;
+            wrapper.style.alignItems = 'center';
+            wrapper.style.justifyContent = 'center';
+            wrapper.style.width = '100%';
+            wrapper.style.height = '100%';
+            
+            const levels = Math.ceil(Math.sqrt(selectedImages.length * 2));
+            let imgIndex = 0;
+            
+            for (let level = 1; level <= levels && imgIndex < selectedImages.length; level++) {
+                const row = document.createElement('div');
+                row.style.display = 'flex';
+                row.style.gap = `${currentGap}px`;
+                
+                for (let i = 0; i < level && imgIndex < selectedImages.length; i++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'mosaic-cell';
+                    cell.style.width = '80px';
+                    cell.style.height = '80px';
+                    
+                    const imgEl = document.createElement('img');
+                    imgEl.src = selectedImages[imgIndex];
+                    imgEl.style.animation = `fadeIn 0.4s ease-out ${imgIndex * 0.02}s both`;
+                    cell.appendChild(imgEl);
+                    row.appendChild(cell);
+                    imgIndex++;
+                }
+                
+                wrapper.appendChild(row);
+            }
+            
+            container.appendChild(wrapper);
+        }
+        
+        function generateCircles(container) {
+            const wrapper = document.createElement('div');
+            wrapper.style.width = '100%';
+            wrapper.style.height = '100%';
+            wrapper.style.position = 'relative';
+            wrapper.style.background = currentBgColor;
+            wrapper.style.display = 'flex';
+            wrapper.style.alignItems = 'center';
+            wrapper.style.justifyContent = 'center';
+            
+            selectedImages.forEach((img, index) => {
+                const angle = (index / selectedImages.length) * Math.PI * 2;
+                const radius = Math.min(200, 150 + index * 2);
+                
+                const x = 50 + Math.cos(angle) * (radius / 6);
+                const y = 50 + Math.sin(angle) * (radius / 6);
+                
+                const cell = document.createElement('div');
+                cell.className = 'mosaic-cell';
+                cell.style.position = 'absolute';
+                cell.style.width = '100px';
+                cell.style.height = '100px';
+                cell.style.borderRadius = '50%';
+                cell.style.left = `${x}%`;
+                cell.style.top = `${y}%`;
+                cell.style.transform = 'translate(-50%, -50%)';
+                
+                const imgEl = document.createElement('img');
+                imgEl.src = img;
+                imgEl.style.borderRadius = '50%';
+                imgEl.style.animation = `fadeIn 0.4s ease-out ${index * 0.02}s both`;
+                cell.appendChild(imgEl);
+                wrapper.appendChild(cell);
+            });
+            
+            container.appendChild(wrapper);
+        }
+        
+        function generateDiagonal(container) {
+            const grid = document.createElement('div');
+            grid.className = 'mosaic-grid';
+            grid.style.gap = `${currentGap}px`;
+            grid.style.padding = `${currentGap}px`;
+            grid.style.background = currentBgColor;
+            grid.style.gridTemplateColumns = 'repeat(8, 1fr)';
+            grid.style.gridAutoRows = '80px';
+            grid.style.transform = 'rotate(15deg) scale(1.2)';
+            
+            selectedImages.forEach((img, index) => {
+                const cell = document.createElement('div');
+                cell.className = 'mosaic-cell';
+                
+                const imgEl = document.createElement('img');
+                imgEl.src = img;
+                imgEl.style.animation = `fadeIn 0.4s ease-out ${index * 0.02}s both`;
+                cell.appendChild(imgEl);
+                grid.appendChild(cell);
+            });
+            
+            container.appendChild(grid);
+            makeCellsDraggable();
+        }
+        
+        function generateWaves(container) {
+            const wrapper = document.createElement('div');
+            wrapper.style.display = 'flex';
+            wrapper.style.flexDirection = 'column';
+            wrapper.style.gap = `${currentGap}px`;
+            wrapper.style.padding = `${currentGap}px`;
+            wrapper.style.background = currentBgColor;
+            wrapper.style.width = '100%';
+            wrapper.style.height = '100%';
+            wrapper.style.overflowY = 'auto';
+            
+            const itemsPerRow = 6;
+            let rowIndex = 0;
+            
+            for (let i = 0; i < selectedImages.length; i += itemsPerRow) {
+                const row = document.createElement('div');
+                row.style.display = 'flex';
+                row.style.gap = `${currentGap}px`;
+                row.style.transform = `translateX(${rowIndex % 2 === 0 ? '0' : '40px'})`;
+                
+                for (let j = 0; j < itemsPerRow && i + j < selectedImages.length; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'mosaic-cell';
+                    cell.style.width = '90px';
+                    cell.style.height = '90px';
+                    cell.style.flexShrink = '0';
+                    
+                    const imgEl = document.createElement('img');
+                    imgEl.src = selectedImages[i + j];
+                    imgEl.style.animation = `fadeIn 0.4s ease-out ${(i + j) * 0.02}s both`;
+                    cell.appendChild(imgEl);
+                    row.appendChild(cell);
+                }
+                
+                wrapper.appendChild(row);
+                rowIndex++;
+            }
+            
+            container.appendChild(wrapper);
+        }
+        
+        function generateHeart(container) {
+            const wrapper = document.createElement('div');
+            wrapper.style.width = '100%';
+            wrapper.style.height = '100%';
+            wrapper.style.position = 'relative';
+            wrapper.style.background = currentBgColor;
+            
+            // Heart shape points (simplified)
+            const heartPoints = [
+                {x: 50, y: 30}, {x: 40, y: 20}, {x: 30, y: 20},
+                {x: 20, y: 30}, {x: 20, y: 40}, {x: 30, y: 50},
+                {x: 40, y: 60}, {x: 50, y: 70}, {x: 60, y: 60},
+                {x: 70, y: 50}, {x: 80, y: 40}, {x: 80, y: 30},
+                {x: 70, y: 20}, {x: 60, y: 20}, {x: 50, y: 30}
+            ];
+            
+            selectedImages.forEach((img, index) => {
+                if (index >= heartPoints.length) return;
+                
+                const point = heartPoints[index % heartPoints.length];
+                const cell = document.createElement('div');
+                cell.className = 'mosaic-cell';
+                cell.style.position = 'absolute';
+                cell.style.width = '70px';
+                cell.style.height = '70px';
+                cell.style.left = `${point.x}%`;
+                cell.style.top = `${point.y}%`;
+                cell.style.transform = 'translate(-50%, -50%)';
+                cell.style.borderRadius = '50%';
+                
+                const imgEl = document.createElement('img');
+                imgEl.src = img;
+                imgEl.style.borderRadius = '50%';
+                imgEl.style.animation = `fadeIn 0.4s ease-out ${index * 0.02}s both`;
+                cell.appendChild(imgEl);
+                wrapper.appendChild(cell);
+            });
+            
+            container.appendChild(wrapper);
+        }
+        
+        function generateZigzag(container) {
+            const wrapper = document.createElement('div');
+            wrapper.style.display = 'flex';
+            wrapper.style.flexWrap = 'wrap';
+            wrapper.style.gap = `${currentGap}px`;
+            wrapper.style.padding = `${currentGap}px`;
+            wrapper.style.background = currentBgColor;
+            wrapper.style.alignContent = 'flex-start';
+            
+            selectedImages.forEach((img, index) => {
+                const cell = document.createElement('div');
+                cell.className = 'mosaic-cell';
+                cell.style.width = '120px';
+                cell.style.height = '120px';
+                cell.style.transform = `translateY(${index % 2 === 0 ? '0' : '30px'})`;
+                
+                const imgEl = document.createElement('img');
+                imgEl.src = img;
+                imgEl.style.animation = `fadeIn 0.4s ease-out ${index * 0.02}s both`;
+                cell.appendChild(imgEl);
+                wrapper.appendChild(cell);
+            });
+            
+            container.appendChild(wrapper);
+        }
+        
+        async function downloadCollage() {
+            showLoading(true, 'กำลังเตรียมการดาวน์โหลด...');
+            
+            try {
+                const el = document.getElementById('canvasContent');
+                const scale = 2;
+                
+                const canvas = await html2canvas(el, {
+                    scale: scale,
+                    backgroundColor: '#16161F',
+                    useCORS: true,
+                    logging: false,
+                    allowTaint: true
+                });
+                
+                const link = document.createElement('a');
+                link.download = `kollage_${Date.now()}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                
+                showLoading(false);
+            } catch (error) {
+                console.error('Error downloading:', error);
+                alert('เกิดข้อผิดพลาดในการดาวน์โหลด กรุณาลองใหม่อีกครั้ง');
+                showLoading(false);
+            }
+        }
+        
+        function showLoading(show, text = 'กำลังประมวลผล...') {
+            let overlay = document.getElementById('loadingOverlay');
+            
+            if (show) {
+                if (!overlay) {
+                    overlay = document.createElement('div');
+                    overlay.id = 'loadingOverlay';
+                    overlay.className = 'loading-overlay';
+                    overlay.innerHTML = `
+                        <div class="loading-content">
+                            <div class="spinner"></div>
+                            <div class="loading-text" id="loadingText">${text}</div>
+                        </div>
+                    `;
+                    document.body.appendChild(overlay);
+                } else {
+                    overlay.style.display = 'flex';
+                    updateLoadingText(text);
+                }
+            } else {
+                if (overlay) {
+                    overlay.style.display = 'none';
+                }
+            }
+        }
+        
+        function updateLoadingText(text) {
+            const loadingText = document.getElementById('loadingText');
+            if (loadingText) {
+                loadingText.textContent = text;
+            }
+        }
+        
+        // Add CSS animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                    transform: scale(0.9);
+                }
+                to {
+                    opacity: 1;
+                    transform: scale(1);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        console.log('✨ KOLLAGE พร้อมใช้งาน - สร้างคอลลาจที่น่าประทับใจได้เลย!');
+    </script>
+</body>
+</html>
